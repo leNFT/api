@@ -1,8 +1,7 @@
 import express from "express";
 var router = express.Router();
+import { getHistory } from "../controllers/lock.js";
 
-router.get("/", function (req, res) {
-  res.send("Hello, World!");
-});
+router.get("/history", getHistory);
 
 export default router;

@@ -33,7 +33,6 @@ export async function getImageURL(req, res) {
     url + "?contractAddress=" + address + "&tokenId=" + tokenId,
     options
   ).catch((err) => console.error(err));
-  console.log(getNFTMetadataResponse);
   const nftMetadata = await getNFTMetadataResponse.json();
 
   if (nftMetadata.media[0].gateway) {
