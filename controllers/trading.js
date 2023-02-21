@@ -115,7 +115,7 @@ function poolLiquidityActivitySubscription(pool) {
     console.log("lp", lp);
 
     // Update pool info
-    tradingPools[pool].nfts.amount += lp[0].nftIds.length;
+    tradingPools[pool].nft.amount += lp[0].nftIds.length;
     tradingPools[pool].token.amount = BigNumber.from(lp[0].tokenAmount)
       .add(tradingPools[pool].token.amount)
       .toString();
@@ -144,7 +144,7 @@ function poolLiquidityActivitySubscription(pool) {
     );
     console.log("lp", lp);
 
-    tradingPools[pool].nfts.amount -= lp[0].nftIds.length;
+    tradingPools[pool].nft.amount -= lp[0].nftIds.length;
     tradingPools[pool].token.amount = BigNumber.from(lp[0].tokenAmount)
       .sub(tradingPools[pool].token.amount)
       .toString();
@@ -167,14 +167,14 @@ function poolTradingActivitySubscription(pool) {
     const price = decodedLog.args.price;
 
     if (mode == "buy") {
-      tradingPools[pool].nfts.amount -= nfts.length;
+      tradingPools[pool].nft.amount -= nfts.length;
       tradingPools[pool].token.amount = BigNumber.from(
         tradingPools[pool].token.amount
       )
         .add(price)
         .toString();
     } else if (mode == "sell") {
-      tradingPools[pool].nfts.amount += nfts.length;
+      tradingPools[pool].nft.amount += nfts.length;
       tradingPools[pool].token.amount = BigNumber.from(
         tradingPools[pool].token.amount
       )
