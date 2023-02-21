@@ -1,0 +1,67 @@
+{
+  "1": {
+    "Name": "goerli",
+    "ETH": {
+      "address": "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
+      "decimals": 18
+    },
+    "USDC": {
+      "address": "0x07865c6E87B9F70255377e024ace6630C1Eaa37F",
+      "decimals": 6,
+      "priceFeed": "0xb4c4a493AB6356497713A78FFA6c60FB53517c63"
+    },
+    "ValidationLogicLib": "0x89e621e6275aE14f6e2f61B007F98baE7e2C83C6",
+    "BorrowLogicLib": "0x4710AAE603B9FD353b9255d96c044950cfd9bCDC",
+    "LiquidationLogicLib": "0x4Aef4C92E6a2fC5B8A5ef5F9052465c5928F161B",
+    "AddressesProvider": "0x6F7E8372b08382fb9C471e13c50100Cf1d1090Cf",
+    "LendingMarket": "0x7D41Ce7D150D61cdE478C988F25350A5f54622Db",
+    "LoanCenter": "0x41C8a215E676772F0472B3dd465e5FFCf9586911",
+    "DebtToken": "0x5B7855C0cE26e86b6403f45A26b1d31511F5d304",
+    "NativeToken": "0x1399B942225B3224a0FcEC6bd5e00c9206C759B3",
+    "GenesisNFT": "0xcCEcCD6c72bEda6d7F07378173f25267AC355901",
+    "VotingEscrow": "0xD4BccFB7A22e9C32f5500bCEcb9F6836E4152B64",
+    "GaugeController": "0x02E345B76e9f27e43d05e560103e9A060B797482",
+    "FeeDistributor": "0x0e0Ea2360331D050613d0dee50e0564520FebBD2",
+    "TradingPoolFactory": "0x4e4354E3e1317807F20dD0D7B8DeFC6BB169211d",
+    "SwapRouter": "0xf9BF31F859d267F983Bf97ae9a9B7F5Ab0AB2ee4",
+    "InterestRate": "0x955476C6b82a1126eF453c6879e30851677Aa249",
+    "NFTOracle": "0xaBa76bDAc428B8648a087C261A692F43768C6F3B",
+    "TokenOracle": "0xe09555AA0c6fd59491E6eA722a4a3fBfaf7da1F5",
+    "WETHGateway": "0x9F30b7fd8Fd5DcBBA47B64ea019Ac725cf0Db0AF",
+    "ExponentialCurve": "0xE01cE6f19e8CE7d113B7894608Ec055bc155Bb56",
+    "LinearCurve": "0xD7Af9238f2ecCad6CDb3C02C76667f594A026704"
+  },
+  "5": {
+    "Name": "goerli",
+    "ETH": {
+      "address": "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
+      "decimals": 18
+    },
+    "USDC": {
+      "address": "0x07865c6E87B9F70255377e024ace6630C1Eaa37F",
+      "decimals": 6,
+      "priceFeed": "0xb4c4a493AB6356497713A78FFA6c60FB53517c63"
+    },
+    "ValidationLogicLib": "0x38Ce272D92D72917f538891F07a56f31AcF5E528",
+    "BorrowLogicLib": "0x27A401110402c3e588E9Df4413621DdC0892AcE1",
+    "LiquidationLogicLib": "0x058449dd4D123AB18757A47cc82f1Ea4680aAD41",
+    "AddressesProvider": "0x2904ce1A542f4abdA11bE2eDc1Efc922a6f7457a",
+    "LendingMarket": "0x2f45BC556abDee918215cD947ad23ce74bac6d7A",
+    "LoanCenter": "0xe9D9874378bb0d90C56d73B0406c02f54B52a46c",
+    "DebtToken": "0xdDB2faf06c42AeD4dD7FD284C1D4D5c36eA1d905",
+    "NativeToken": "0xB7FbA9CEcC215ad3DDe3E848107F2f264Abe089F",
+    "GenesisNFT": "0xBFA546AfC8288855c2d027Cc38b684d4c114B53b",
+    "VotingEscrow": "0x2A80240174D6b7aE31521177b76c3188DCc7BDc3",
+    "GaugeController": "0xFCD776c3bA174E551b0AA7bc08485C49266E5a4C",
+    "FeeDistributor": "0xc2E531a7AA8563a600f0568D65B8aE3846be2A5f",
+    "TradingPoolFactory": "0x081e4aA4f8De0772F0f47c3AD25e054cD0392e2c",
+    "SwapRouter": "0xC8c787Af5A30DF30E521089C137d9e7a199f5846",
+    "InterestRate": "0x9282dD560CbaC2ECB7B3217d339c8422EEf0C449",
+    "NFTOracle": "0x19E5098706Be52572Ad3E00c3E01b59c9f1ff220",
+    "TokenOracle": "0xD79083B9D264eF6A761019A984AeC398A1bf8c0e",
+    "WETHGateway": "0x0f6b8869B4EbAf7683de6B50f4e1c4CD2B294d57",
+    "ExponentialCurve": "0x4B6729d89998164e3689a176845688Ef08b990B5",
+    "LinearCurve": "0x88461D9E8f2162f410DF375F688779F6e03Cb10A",
+    "CurvePool": "0x86F25770835EF590aaAF4FE65f8dC53061fEf2CB"
+  }
+}
