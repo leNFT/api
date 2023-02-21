@@ -262,7 +262,8 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
     });
 
     const tradeLogs = buyLogs.concat(sellLogs);
-    tradeLogs.sort((a, b) => a.blockNumber - b.blockNumber);
+    tradeLogs.sort((a, b) => b.blockNumber - a.blockNumber);
+    console.log("tradeLogs", tradeLogs);
     // Get the data for the last 24 hours to calculate the volume
     var volume = "0";
     const currentBlock = await alchemy.core.getBlockNumber();
