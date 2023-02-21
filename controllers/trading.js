@@ -14,7 +14,7 @@ const alchemySettings = {
   network: Network.ETH_GOERLI,
 };
 const alchemy = new Alchemy(alchemySettings);
-
+const tradingPoolInterface = new utils.Interface(tradingPoolContract.abi);
 var tradingPools = {};
 
 // Fill the tradingPools array with the addresses of all the trading pools
@@ -46,6 +46,181 @@ for (let i = 0; i < createTradingPoolResponse.length; i++) {
 }
 
 console.log("Finished adding initial trading pools");
+
+// Create a websocket to listen for new pools
+const newTradingPoolsFilter = {
+  address: addresses.TradingPoolFactory,
+  topics: [utils.id("CreateTradingPool(address,address,address)")],
+};
+
+alchemy.ws.on(newTradingPoolsFilter, (log, event) => {
+  // Emitted whenever a new trading pool is created
+  // Decode the event
+  const nftAddress = utils.defaultAbiCoder.decode(
+    ["address"],
+    log.topics[2]
+  )[0];
+  const tokenAddress = utils.defaultAbiCoder.decode(
+    ["address"],
+    log.topics[3]
+  )[0];
+  const poolAddress = utils.defaultAbiCoder.decode(
+    ["address"],
+    log.topics[1]
+  )[0];
+
+  addTradingPool(poolAddress, nftAddress, tokenAddress, 5);
+
+  console.log("Got new trading pool: ", poolAddress);
+});
+
+console.log("Set up new trading pools filter");
+
+function poolLiquidityActivitySubscription(pool) {
+  console.log("Creating liquidity activity subscription for ", pool);
+
+  // Create a websocket to listen to a pools activity
+  const addLiquidityPoolActivityFilter = {
+    address: pool,
+    topics: [
+      utils.id(
+        "AddLiquidity(address,uint256,uint256[],uint256,uint256,address,uint256,uint256)"
+      ),
+    ],
+  };
+  const removeLiquidityPoolActivityFilter = {
+    address: pool,
+    topics: [utils.id("RemoveLiquidity(address,uint256)")],
+  };
+
+  alchemy.ws.on(addLiquidityPoolActivityFilter, async (log, event) => {
+    const getLpFunctionSig = "0xcdd3f298";
+    const lpId = utils.defaultAbiCoder
+      .decode(["uint256"], log.topics[2])[0]
+      .toNumber();
+
+    console.log("Got new add liquidity, lpId:", lpId);
+    console.log("pool:", pool);
+    const getNewLpResponse = await alchemy.core.call({
+      to: pool,
+      data:
+        getLpFunctionSig +
+        utils.defaultAbiCoder.encode(["uint256"], [lpId]).slice(2),
+    });
+
+    const lp = tradingPoolInterface.decodeFunctionResult(
+      "getLP",
+      getNewLpResponse
+    );
+    console.log("lp", lp);
+
+    // Update pool info
+    tradingPools[pool].nfts.amount += lp[0].nftIds.length;
+    tradingPools[pool].token.amount = BigNumber.from(lp[0].tokenAmount)
+      .add(tradingPools[pool].token.amount)
+      .toString();
+
+    console.log("addedliquidity");
+  });
+
+  alchemy.ws.on(removeLiquidityPoolActivityFilter, async (log, event) => {
+    const lpId = utils.defaultAbiCoder
+      .decode(["uint256"], log.topics[2])[0]
+      .toNumber();
+
+    // If a user is doing a removing LP operation
+    console.log("Got new remove liquidity");
+    console.log("pool:", pool);
+    const getNewLpResponse = await alchemy.core.call({
+      to: pool,
+      data:
+        getLpFunctionSig +
+        utils.defaultAbiCoder.encode(["uint256"], [lpId]).slice(2),
+    });
+
+    const lp = tradingPoolInterface.decodeFunctionResult(
+      "getLP",
+      getNewLpResponse
+    );
+    console.log("lp", lp);
+
+    tradingPools[pool].nfts.amount -= lp[0].nftIds.length;
+    tradingPools[pool].token.amount = BigNumber.from(lp[0].tokenAmount)
+      .sub(tradingPools[pool].token.amount)
+      .toString();
+  });
+}
+
+function poolTradingActivitySubscription(pool) {
+  console.log("Creating trading activity subscription for ", pool);
+
+  // Update LP from logs
+  async function updateLPWithLog(log, mode) {
+    console.log("log", log);
+    // Emitted whenever a new buy / sell is done in a pool
+    const decodedLog = tradingPoolInterface.parseLog({
+      data: log.data,
+      topics: log.topics,
+    });
+    console.log("decodedLog", decodedLog);
+    const nfts = decodedLog.args.nftIds;
+    const price = decodedLog.args.price;
+
+    if (mode == "buy") {
+      tradingPools[pool].nfts.amount -= nfts.length;
+      tradingPools[pool].token.amount = BigNumber.from(
+        tradingPools[pool].token.amount
+      )
+        .add(price)
+        .toString();
+    } else if (mode == "sell") {
+      tradingPools[pool].nfts.amount += nfts.length;
+      tradingPools[pool].token.amount = BigNumber.from(
+        tradingPools[pool].token.amount
+      )
+        .sub(price)
+        .toString();
+    }
+
+    // Update trade logs and volume
+    tradingPools[pool].tradeLogs.unshift(log);
+
+    // Get the data for the last 24 hours to calculate the volume
+    const currentBlock = await alchemy.core.getBlockNumber();
+    for (let i = 0; i < tradeLogs.length; i++) {
+      if (tradeLogs[i].blockNumber < currentBlock - 5760) {
+        // Remove the logs that are older than 24 hours
+        tradingPools[pool].tradeLogs.splice(i);
+        break;
+      }
+      const tradeLogData = tradingPoolInterface.parseLog(
+        tradingPools[pool].tradeLogs[i]
+      );
+      volume = BigNumber.from(volume).add(tradeLogData.args.price).toString();
+    }
+  }
+
+  // Create two websocket to listen to a pools activity (buy and sell)
+  const buyPoolActivityFilter = {
+    address: pool,
+    topics: [utils.id("Buy(address,uint256[],uint256)")],
+  };
+
+  const sellPoolActivityFilter = {
+    address: pool,
+    topics: [utils.id("Sell(address,uint256[],uint256)")],
+  };
+
+  alchemy.ws.on(sellPoolActivityFilter, async (log, event) => {
+    console.log("Got new selling swap");
+    await updateLPWithLog(log, "sell");
+  });
+
+  alchemy.ws.on(buyPoolActivityFilter, async (log, event) => {
+    console.log("Got new buying swap");
+    await updateLPWithLog(log, "buy");
+  });
+}
 
 async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
   const getNameFunctionSig = "0x06fdde03";
@@ -83,18 +258,17 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
     });
 
     const tradeLogs = buyLogs.concat(sellLogs);
-    tradeLogs.sort((a, b) => b.blockNumber - a.blockNumber);
-    const tradingPoolInterface = new utils.Interface(tradingPoolContract.abi);
-
+    tradeLogs.sort((a, b) => a.blockNumber - b.blockNumber);
     // Get the data for the last 24 hours to calculate the volume
     var volume = "0";
     const currentBlock = await alchemy.core.getBlockNumber();
-    while (
-      tradeLogs.length > 0 &&
-      tradeLogs[tradeLogs.length - 1].blockNumber > currentBlock - 5760
-    ) {
-      const tradeLog = tradeLogs.pop();
-      const tradeLogData = tradingPoolInterface.parseLog(tradeLog);
+    for (let i = 0; i < tradeLogs.length; i++) {
+      if (tradeLogs[i].blockNumber < currentBlock - 5760) {
+        // Remove the logs that are older than 24 hours
+        tradeLogs.splice(i);
+        break;
+      }
+      const tradeLogData = tradingPoolInterface.parseLog(tradeLogs[i]);
       volume = BigNumber.from(volume).add(tradeLogData.args.price).toString();
     }
 
@@ -192,6 +366,10 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
         address: tokenAddress,
       },
     };
+
+    // Subscribe to the new trading pool activites
+    poolTradingActivitySubscription(poolAddress);
+    poolLiquidityActivitySubscription(poolAddress);
   } catch (error) {
     console.log(error);
   }
