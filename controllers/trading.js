@@ -182,13 +182,14 @@ function poolTradingActivitySubscription(pool) {
         .toString();
     }
 
-    // Update trade logs and volume
+    // add the log to the pool's trade logs
     tradingPools[pool].tradeLogs.unshift(log);
 
     // Get the data for the last 24 hours to calculate the volume
     const currentBlock = await alchemy.core.getBlockNumber();
-    for (let i = 0; i < tradeLogs.length; i++) {
-      if (tradeLogs[i].blockNumber < currentBlock - 5760) {
+    var volume = "0";
+    for (let i = 0; i < tradingPools[pool].tradeLogs.length; i++) {
+      if (tradingPools[pool].tradeLogs[i].blockNumber < currentBlock - 5760) {
         // Remove the logs that are older than 24 hours
         tradingPools[pool].tradeLogs.splice(i);
         break;
@@ -198,6 +199,9 @@ function poolTradingActivitySubscription(pool) {
       );
       volume = BigNumber.from(volume).add(tradeLogData.args.price).toString();
     }
+
+    // Update the volume
+    tradingPools[pool].volume = volume;
   }
 
   // Create two websocket to listen to a pools activity (buy and sell)
