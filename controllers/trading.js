@@ -16,6 +16,7 @@ const alchemySettings = {
 const alchemy = new Alchemy(alchemySettings);
 const tradingPoolInterface = new utils.Interface(tradingPoolContract.abi);
 var tradingPools = {};
+var collections = [];
 
 // Fill the tradingPools array with the addresses of all the trading pools
 const createTradingPoolResponse = await alchemy.core.getLogs({
@@ -376,6 +377,14 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
       },
     };
 
+    // Add the collection to the list of collections
+    collections.push({
+      address: nftAddress,
+      name: nftName,
+      image: nftImage,
+      pool: poolAddress,
+    });
+
     // Subscribe to the new trading pool activites
     poolTradingActivitySubscription(poolAddress);
     poolLiquidityActivitySubscription(poolAddress);
@@ -389,6 +398,7 @@ export async function getPools(req, res) {
   res.status(200).json(tradingPools);
 }
 
+// Controller function that returns the trading pool history
 export async function getPoolHistory(req, res) {
   const { chainId, pool } = req.query;
   console.log("chainId", chainId);
@@ -420,4 +430,8 @@ export async function getPoolHistory(req, res) {
   }
 
   res.status(200).json(history);
+}
+
+export async function getCollections(req, res) {
+  res.status(200).json(collections);
 }
