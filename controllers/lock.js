@@ -118,5 +118,5 @@ export async function getHistory(req, res) {
     }
   }
 
-  res.status(200).json(history.slice(-5));
+  res.status(200).json(history.slice(-5).reverse());
 }
