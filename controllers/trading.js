@@ -190,8 +190,10 @@ function poolTradingActivitySubscription(pool) {
     var volume = "0";
     for (let i = 0; i < tradingPools[pool].tradeLogs.length; i++) {
       if (tradingPools[pool].tradeLogs[i].blockNumber < currentBlock - 5760) {
-        // Remove the logs that are older than 24 hours
-        tradingPools[pool].tradeLogs.splice(i);
+        // Remove the logs that are older than 24 hours and past the 100th log
+        if (i > 100) {
+          tradingPools[pool].tradeLogs.splice(i);
+        }
         break;
       }
       const tradeLogData = tradingPoolInterface.parseLog(
@@ -269,8 +271,10 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
     const currentBlock = await alchemy.core.getBlockNumber();
     for (let i = 0; i < tradeLogs.length; i++) {
       if (tradeLogs[i].blockNumber < currentBlock - 5760) {
-        // Remove the logs that are older than 24 hours
-        tradeLogs.splice(i);
+        // Remove the logs that are older than 24 hours and past the 100th log
+        if (i > 100) {
+          tradeLogs.splice(i);
+        }
         break;
       }
       const tradeLogData = tradingPoolInterface.parseLog(tradeLogs[i]);
@@ -380,7 +384,40 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
   }
 }
 
-// Controller function for the GET route
+// Controller function that returns the trading pools
 export async function getPools(req, res) {
   res.status(200).json(tradingPools);
+}
+
+export async function getPoolHistory(req, res) {
+  const { chainId, pool } = req.query;
+  console.log("chainId", chainId);
+  console.log("pool", pool);
+
+  var history = [];
+  const tradeLogs = tradingPools[pool].tradeLogs;
+
+  // Send the last 25 trades
+  for (let i = 0; i < 25; i++) {
+    if (i == tradeLogs.length) {
+      break;
+    }
+
+    const decodedLog = tradingPoolInterface.parseLog({
+      data: tradeLogs[i].data,
+      topics: tradeLogs[i].topics,
+    });
+    const blockResponse = await alchemy.core.getBlock(tradeLogs[i].blockNumber);
+
+    history.push({
+      type: decodedLog.name.toLowerCase(),
+      timestamp: blockResponse.timestamp,
+      address: tradeLogs[i].address,
+      nftIds: decodedLog.args.nftIds.map((id) => BigNumber.from(id).toNumber()),
+      price: BigNumber.from(decodedLog.args.price).toString(),
+      transaction: tradeLogs[i].transactionHash,
+    });
+  }
+
+  res.status(200).json(history);
 }
