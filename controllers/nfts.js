@@ -1,4 +1,7 @@
-import fetch from "node-fetch";
+import { Network } from "alchemy-sdk";
+import { Alchemy } from "alchemy-sdk";
+import { config } from "dotenv";
+config();
 
 // Controller function for the GET route
 export async function getImageURL(req, res) {
@@ -16,24 +19,13 @@ export async function getImageURL(req, res) {
     return "Unsupported ChainID";
   }
 
-  const url =
-    "https://eth-" +
-    chainName +
-    ".g.alchemy.com/nft/v2/" +
-    process.env.ALCHEMY_API_KEY +
-    "/getNFTMetadata";
-
-  const options = {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
+  const alchemySettings = {
+    apiKey: process.env.ALCHEMY_API_KEY_GOERLI,
+    network: Network.ETH_GOERLI,
   };
-  const getNFTMetadataResponse = await fetch(
-    url + "?contractAddress=" + address + "&tokenId=" + tokenId,
-    options
-  ).catch((err) => console.error(err));
-  const nftMetadata = await getNFTMetadataResponse.json();
+  const alchemy = new Alchemy(alchemySettings);
+
+  const nftMetadata = await alchemy.nft.getNftMetadata(address, tokenId);
 
   if (nftMetadata.media[0].gateway) {
     res.status(200).json(nftMetadata.media[0].gateway);

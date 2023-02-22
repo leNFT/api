@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import { BigNumber } from "ethers";
 import { utils } from "ethers";
 import contractAddresses from "../contractAddresses.json" assert { type: "json" };
@@ -9,9 +8,13 @@ config();
 
 const addresses = contractAddresses[5];
 const alchemySettings = {
-  apiKey: process.env.ALCHEMY_API_KEY,
+  apiKey: process.env.ALCHEMY_API_KEY_GOERLI,
   network: Network.ETH_GOERLI,
 };
+console.log(
+  "process.env.ALCHEMY_API_KEY_GOERLI",
+  process.env.ALCHEMY_API_KEY_GOERLI
+);
 const alchemy = new Alchemy(alchemySettings);
 const epochFunctionSig = utils.id("epoch(uint256)").substring(0, 10);
 const totalFeesAtFunctionSig = utils

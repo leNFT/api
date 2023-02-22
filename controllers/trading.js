@@ -1,5 +1,4 @@
 import { utils } from "ethers";
-import fetch from "node-fetch";
 import { BigNumber } from "ethers";
 import contractAddresses from "../contractAddresses.json" assert { type: "json" };
 import tradingPoolContract from "../contracts/TradingPool.json" assert { type: "json" };
@@ -10,7 +9,7 @@ config();
 
 const addresses = contractAddresses[5];
 const alchemySettings = {
-  apiKey: process.env.ALCHEMY_API_KEY,
+  apiKey: process.env.ALCHEMY_API_KEY_GOERLI,
   network: Network.ETH_GOERLI,
 };
 const alchemy = new Alchemy(alchemySettings);
@@ -43,7 +42,7 @@ for (let i = 0; i < createTradingPoolResponse.length; i++) {
     result.topics[1]
   )[0];
 
-  addTradingPool(poolAddress, nftAddress, tokenAddress, 5);
+  await addTradingPool(poolAddress, nftAddress, tokenAddress, 5);
 }
 
 console.log("Finished adding initial trading pools");
@@ -249,135 +248,127 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
       ? contractAddresses[chainId]
       : contractAddresses["1"];
 
-  try {
-    const buyLogs = await alchemy.core.getLogs({
-      address: poolAddress,
-      fromBlock: "earliest",
-      toBlock: "latest",
-      topics: [utils.id("Buy(address,uint256[],uint256)")],
-    });
+  const buyLogs = await alchemy.core.getLogs({
+    address: poolAddress,
+    fromBlock: "earliest",
+    toBlock: "latest",
+    topics: [utils.id("Buy(address,uint256[],uint256)")],
+  });
 
-    const sellLogs = await alchemy.core.getLogs({
-      address: poolAddress,
-      fromBlock: "earliest",
-      toBlock: "latest",
-      topics: [utils.id("Sell(address,uint256[],uint256)")],
-    });
+  const sellLogs = await alchemy.core.getLogs({
+    address: poolAddress,
+    fromBlock: "earliest",
+    toBlock: "latest",
+    topics: [utils.id("Sell(address,uint256[],uint256)")],
+  });
 
-    const tradeLogs = buyLogs.concat(sellLogs);
-    tradeLogs.sort((a, b) => b.blockNumber - a.blockNumber);
-    console.log("tradeLogs", tradeLogs);
-    // Get the data for the last 24 hours to calculate the volume
-    var volume = "0";
-    const currentBlock = await alchemy.core.getBlockNumber();
-    for (let i = 0; i < tradeLogs.length; i++) {
-      if (tradeLogs[i].blockNumber < currentBlock - 5760) {
-        // Remove the logs that are older than 24 hours and past the 100th log
-        if (i > 100) {
-          tradeLogs.splice(i);
-        }
-        break;
+  const tradeLogs = buyLogs.concat(sellLogs);
+  tradeLogs.sort((a, b) => b.blockNumber - a.blockNumber);
+  // Get the data for the last 24 hours to calculate the volume
+  var volume = "0";
+  const currentBlock = await alchemy.core.getBlockNumber();
+  for (let i = 0; i < tradeLogs.length; i++) {
+    if (tradeLogs[i].blockNumber < currentBlock - 5760) {
+      // Remove the logs that are older than 24 hours and past the 100th log
+      if (i > 100) {
+        tradeLogs.splice(i);
       }
-      const tradeLogData = tradingPoolInterface.parseLog(tradeLogs[i]);
-      volume = BigNumber.from(volume).add(tradeLogData.args.price).toString();
+      break;
     }
-
-    const tokenSymbolResponse = await alchemy.core.call({
-      to: tokenAddress,
-      data: getSymbolFunctionSig,
-    });
-
-    const nftNameResponse = await alchemy.core.call({
-      to: nftAddress,
-      data: getNameFunctionSig,
-    });
-
-    const gaugeResponse = await alchemy.core.call({
-      to: addresses.GaugeController,
-      data:
-        getGaugeFunctionSig +
-        utils.defaultAbiCoder.encode(["address"], [poolAddress]).substring(2),
-    });
-
-    const nftAmountResponse = await alchemy.core.call({
-      to: nftAddress,
-      data:
-        balanceOfFunctionSig +
-        utils.defaultAbiCoder.encode(["address"], [poolAddress]).substring(2),
-    });
-
-    const tokenAmountResponse = await alchemy.core.call({
-      to: tokenAddress,
-      data:
-        balanceOfFunctionSig +
-        utils.defaultAbiCoder.encode(["address"], [poolAddress]).substring(2),
-    });
-
-    const nftName = utils.defaultAbiCoder.decode(
-      ["string"],
-      nftNameResponse
-    )[0];
-    const tokenSymbol = utils.defaultAbiCoder.decode(
-      ["string"],
-      tokenSymbolResponse
-    )[0];
-    const gauge = utils.defaultAbiCoder.decode(["address"], gaugeResponse)[0];
-
-    const nftAmount = utils.defaultAbiCoder
-      .decode(["uint256"], nftAmountResponse)[0]
-      .toString();
-
-    const tokenAmount = utils.defaultAbiCoder
-      .decode(["uint256"], tokenAmountResponse)[0]
-      .toString();
-
-    console.log("GEtting image");
-
-    // Get the image for the collection
-    const nftMetadata = await alchemy.nft.getNftMetadata(nftAddress, "1");
-    var nftImage;
-
-    if (nftMetadata.media[0]) {
-      nftImage = nftMetadata.media[0].gateway;
-    } else if (nftMetadata.tokenUri.gateway) {
-      nftImage = nftMetadata.tokenUri.gateway;
-    } else {
-      nftImage = "";
-    }
-
-    tradingPools[poolAddress] = {
-      tradeLogs: tradeLogs,
-      gauge: gauge,
-      volume: volume,
-      nft: {
-        amount: nftAmount,
-        name: nftName,
-        address: nftAddress,
-        image: nftImage,
-      },
-      token: {
-        amount: tokenAmount,
-        name: tokenSymbol,
-        address: tokenAddress,
-      },
-    };
-
-    // Add the collection to the list of collections
-    collections.push({
-      address: nftAddress,
-      name: nftName,
-      image: nftImage,
-      pool: poolAddress,
-    });
-
-    // Subscribe to the new trading pool activites
-    poolTradingActivitySubscription(poolAddress);
-    poolLiquidityActivitySubscription(poolAddress);
-
-    console.log("Finished setting up pools");
-  } catch (error) {
-    console.log(error);
+    const tradeLogData = tradingPoolInterface.parseLog(tradeLogs[i]);
+    volume = BigNumber.from(volume).add(tradeLogData.args.price).toString();
   }
+
+  const tokenSymbolResponse = await alchemy.core.call({
+    to: tokenAddress,
+    data: getSymbolFunctionSig,
+  });
+
+  const nftNameResponse = await alchemy.core.call({
+    to: nftAddress,
+    data: getNameFunctionSig,
+  });
+
+  const gaugeResponse = await alchemy.core.call({
+    to: addresses.GaugeController,
+    data:
+      getGaugeFunctionSig +
+      utils.defaultAbiCoder.encode(["address"], [poolAddress]).substring(2),
+  });
+
+  const nftAmountResponse = await alchemy.core.call({
+    to: nftAddress,
+    data:
+      balanceOfFunctionSig +
+      utils.defaultAbiCoder.encode(["address"], [poolAddress]).substring(2),
+  });
+
+  const tokenAmountResponse = await alchemy.core.call({
+    to: tokenAddress,
+    data:
+      balanceOfFunctionSig +
+      utils.defaultAbiCoder.encode(["address"], [poolAddress]).substring(2),
+  });
+
+  const nftName = utils.defaultAbiCoder.decode(["string"], nftNameResponse)[0];
+  const tokenSymbol = utils.defaultAbiCoder.decode(
+    ["string"],
+    tokenSymbolResponse
+  )[0];
+  const gauge = utils.defaultAbiCoder.decode(["address"], gaugeResponse)[0];
+
+  const nftAmount = utils.defaultAbiCoder
+    .decode(["uint256"], nftAmountResponse)[0]
+    .toString();
+
+  const tokenAmount = utils.defaultAbiCoder
+    .decode(["uint256"], tokenAmountResponse)[0]
+    .toString();
+
+  console.log("GEtting image");
+
+  // Get the image for the collection
+  const nftMetadata = await alchemy.nft.getNftMetadata(nftAddress, "1");
+  var nftImage;
+
+  if (nftMetadata.media[0]) {
+    nftImage = nftMetadata.media[0].gateway;
+  } else if (nftMetadata.tokenUri.gateway) {
+    nftImage = nftMetadata.tokenUri.gateway;
+  } else {
+    nftImage = "";
+  }
+
+  tradingPools[poolAddress] = {
+    tradeLogs: tradeLogs,
+    gauge: gauge,
+    volume: volume,
+    nft: {
+      amount: nftAmount,
+      name: nftName,
+      address: nftAddress,
+      image: nftImage,
+    },
+    token: {
+      amount: tokenAmount,
+      name: tokenSymbol,
+      address: tokenAddress,
+    },
+  };
+
+  // Add the collection to the list of collections
+  collections.push({
+    address: nftAddress,
+    name: nftName,
+    image: nftImage,
+    pool: poolAddress,
+  });
+
+  // Subscribe to the new trading pool activites
+  poolTradingActivitySubscription(poolAddress);
+  poolLiquidityActivitySubscription(poolAddress);
+
+  console.log("Finished setting up pools");
 }
 
 // Controller function that returns the trading pools
