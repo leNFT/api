@@ -331,28 +331,13 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
       .decode(["uint256"], tokenAmountResponse)[0]
       .toString();
 
-    // Get the image for the collection
-    const url =
-      "https://eth-" +
-      chainName +
-      ".g.alchemy.com/nft/v2/" +
-      process.env.ALCHEMY_API_KEY +
-      "/getNFTMetadata";
+    console.log("GEtting image");
 
-    const options = {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-    };
-    const getNFTMetadataResponse = await fetch(
-      url + "?contractAddress=" + nftAddress + "&tokenId=" + 1,
-      options
-    ).catch((err) => console.error(err));
-    const nftMetadata = await getNFTMetadataResponse.json();
+    // Get the image for the collection
+    const nftMetadata = await alchemy.nft.getNftMetadata(nftAddress, "1");
     var nftImage;
 
-    if (nftMetadata.media[0].gateway) {
+    if (nftMetadata.media[0]) {
       nftImage = nftMetadata.media[0].gateway;
     } else if (nftMetadata.tokenUri.gateway) {
       nftImage = nftMetadata.tokenUri.gateway;
@@ -388,6 +373,8 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
     // Subscribe to the new trading pool activites
     poolTradingActivitySubscription(poolAddress);
     poolLiquidityActivitySubscription(poolAddress);
+
+    console.log("Finished setting up pools");
   } catch (error) {
     console.log(error);
   }
