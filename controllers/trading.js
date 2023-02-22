@@ -325,8 +325,6 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
     .decode(["uint256"], tokenAmountResponse)[0]
     .toString();
 
-  console.log("GEtting image");
-
   // Get the image for the collection
   const nftMetadata = await alchemy.nft.getNftMetadata(nftAddress, "1");
   var nftImage;
@@ -367,9 +365,9 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
   // Subscribe to the new trading pool activites
   poolTradingActivitySubscription(poolAddress);
   poolLiquidityActivitySubscription(poolAddress);
-
-  console.log("Finished setting up pools");
 }
+
+console.log("Finished setting up pools");
 
 // Controller function that returns the trading pools
 export async function getPools(req, res) {

@@ -1,8 +1,9 @@
 import express from "express";
 var router = express.Router();
+import { getGauges, getGaugeHistory } from "../controllers/gauges.js";
 
-router.get("/", function (req, res) {
-  res.send("Hello, World!");
-});
+router.get("/", getGauges);
+
+router.get("/history", getGaugeHistory);
 
 export default router;
