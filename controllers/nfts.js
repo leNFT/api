@@ -1,3 +1,4 @@
+import fetch from "node-fetch";
 import { Network } from "alchemy-sdk";
 import { Alchemy } from "alchemy-sdk";
 import { getMessage } from "eip-712";
