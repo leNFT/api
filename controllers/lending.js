@@ -13,7 +13,7 @@ const alchemySettings = {
 };
 const alchemy = new Alchemy(alchemySettings);
 var lendingPools = {};
-var collections = {};
+var collections = [];
 
 const createLendingPoolResponse = await alchemy.core.getLogs({
   address: addresses.LendingMarket,
@@ -139,9 +139,9 @@ async function setLendingPool(nftAddress, poolAddress) {
     data: getNameFunctionSig,
   });
 
-  collections[nftAddress] = {
+  collections[nftAddress].push({
     pool: poolAddress,
-  };
+  });
 
   lendingPools[poolAddress].assets.push({
     address: nftAddress,
