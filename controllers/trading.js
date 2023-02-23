@@ -331,7 +331,7 @@ async function addTradingPool(poolAddress, nftAddress, tokenAddress, chainId) {
 
   if (nftMetadata.media[0]) {
     nftImage = nftMetadata.media[0].gateway;
-  } else if (nftMetadata.tokenUri.gateway) {
+  } else if (nftMetadata.tokenUri) {
     nftImage = nftMetadata.tokenUri.gateway;
   } else {
     nftImage = "";
