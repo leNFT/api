@@ -23,11 +23,14 @@ const createLendingPoolResponse = await alchemy.core.getLogs({
 });
 
 for (let i = 0; i < createLendingPoolResponse.length; i++) {
-  const result = createLendingPoolResponse[i];
+  const poolAddress = utils.defaultAbiCoder.decode(
+    ["address"],
+    createLendingPoolResponse[i].topics[1]
+  )[0];
 
-  await addLendingPool(
-    utils.defaultAbiCoder.decode(["address"], result.topics[1])[0]
-  );
+  await addLendingPool(poolAddress);
+
+  await createLendingPoolActivityListener(poolAddress);
 }
 
 const setLendingPoolResponse = await alchemy.core.getLogs({
@@ -62,6 +65,7 @@ alchemy.ws.on(newLendingPoolsFilter, (log, event) => {
     log.topics[1]
   )[0];
   addLendingPool(poolAddress);
+  createLendingPoolActivityListener(poolAddress);
 
   console.log("Got new lending pool: ", poolAddress);
 });
@@ -92,13 +96,49 @@ alchemy.ws.on(setLendingPoolsFilter, (log, event) => {
 
 console.log("Set up new lending pools filter");
 
+async function createLendingPoolActivityListener(poolAddress) {
+  // Create a websocket to listen for new pool borrow rate updates
+  const setLendingUpdateBorrowRateFilter = {
+    address: addresses.LendingMarket,
+    topics: [utils.id("UpdatedBorrowRate(address,address,address)")],
+  };
+  alchemy.ws.on(setLendingUpdateBorrowRateFilter, (log, event) => {
+    const poolAddress = utils.defaultAbiCoder.decode(
+      ["address"],
+      log.topics[0]
+    )[0];
+    // Emitted whenever a new trading pool is created
+    updatePoolDetails(poolAddress);
+  });
+}
+
 // Add a new lending pool to the list
 async function addLendingPool(poolAddress) {
+  const getGaugeFunctionSig = "0xb1c6f0e9";
+
+  const gaugeResponse = await alchemy.core.call({
+    to: addresses.GaugeController,
+    data:
+      getGaugeFunctionSig +
+      utils.defaultAbiCoder.encode(["address"], [poolAddress]).substring(2),
+  });
+
+  lendingPools[poolAddress] = {
+    assets: [],
+    gauge: utils.defaultAbiCoder.decode(["address"], gaugeResponse)[0],
+    borrowRate: 0,
+    supplyRate: 0,
+    tvl: "0",
+  };
+
+  await updatePoolDetails(poolAddress);
+}
+
+async function updatePoolDetails(poolAddress) {
   // Add lending pool details
   const totalAssetsFunctionSig = "0x01e1d114";
   const getSupplyRateFunctionSig = "0x84bdc9a8";
   const getBorrowRateFunctionSig = "0xba1c5e80";
-  const getGaugeFunctionSig = "0xb1c6f0e9";
 
   const tvlResponse = await alchemy.core.call({
     to: poolAddress,
@@ -115,16 +155,7 @@ async function addLendingPool(poolAddress) {
     data: getBorrowRateFunctionSig,
   });
 
-  const gaugeResponse = await alchemy.core.call({
-    to: addresses.GaugeController,
-    data:
-      getGaugeFunctionSig +
-      utils.defaultAbiCoder.encode(["address"], [poolAddress]).substring(2),
-  });
-
   lendingPools[poolAddress] = {
-    assets: [],
-    gauge: utils.defaultAbiCoder.decode(["address"], gaugeResponse)[0],
     borrowRate: BigNumber.from(borrowRateResponse).toNumber(),
     supplyRate: BigNumber.from(supplyRateResponse).toNumber(),
     tvl: BigNumber.from(tvlResponse).toString(),
