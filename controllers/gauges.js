@@ -75,6 +75,7 @@ export async function getGauges(req, res) {
 // Controller function that returns the history of a gauge
 export async function getGaugeHistory(req, res) {
   const { gauge } = req.query;
+  console.log("Getting gauge history for: ", gauge);
 
   const epochFunctionSig = utils.id("epoch(uint256)").substring(0, 10);
   const getGaugeRewardsFunctionSig = utils
@@ -116,7 +117,9 @@ export async function getGaugeHistory(req, res) {
     startingEpoch = lastSavedEpoch + 1;
   }
 
-  for (let i = startingEpoch; i + startingEpoch < epoch; i++) {
+  console.log("Starting epoch", startingEpoch);
+
+  for (let i = startingEpoch; i < epoch; i++) {
     // Get the gauge rewards for this epoch
     const gaugeRewardsResponse = await alchemy.core.call({
       to: addresses.GaugeController,
@@ -149,7 +152,7 @@ export async function getGaugeHistory(req, res) {
 
     console.log("Total weight", BigNumber.from(totalWeightResponse).toString());
 
-    history.push({
+    gauges[gauge].history.push({
       epoch: i,
       rewards: BigNumber.from(gaugeRewardsResponse).toString(),
       stake: BigNumber.from(totalWeightResponse).eq(0)
@@ -161,5 +164,5 @@ export async function getGaugeHistory(req, res) {
     });
   }
 
-  res.status(200).json(gauges[gauge].history.slice[-5]);
+  res.status(200).json(gauges[gauge].history.slice(-5));
 }
