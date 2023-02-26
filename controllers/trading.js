@@ -371,7 +371,13 @@ console.log("Finished setting up pools");
 
 // Controller function that returns the trading pools
 export async function getPools(req, res) {
-  res.status(200).json(tradingPools);
+  const { chainId, pool } = req.query;
+
+  if (pool) {
+    res.status(200).json(tradingPools[pool]);
+  } else {
+    res.status(200).json(tradingPools);
+  }
 }
 
 // Controller function that returns the trading pool history
