@@ -164,5 +164,5 @@ export async function getGaugeHistory(req, res) {
     });
   }
 
-  res.status(200).json(gauges[gauge].history.slice(-5));
+  res.status(200).json(gauges[gauge].history.slice(-5).reverse());
 }
