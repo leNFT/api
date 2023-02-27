@@ -4,6 +4,7 @@ import pkg from "body-parser";
 const { json } = pkg;
 import { config } from "dotenv";
 config();
+import initMiddleware from "./lib/init-middleware.js";
 const app = express();
 
 // Initialize the cors middleware
