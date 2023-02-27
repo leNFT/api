@@ -20,8 +20,6 @@ const cors = initMiddleware(
   })
 );
 
-// Middleware
-app.use(cors(corsOptions)); // Enable Cross-Origin Resource Sharing (CORS)
 app.use(json()); // Parse JSON request bodies
 
 import defaultRoute from "./routes/index.js";
