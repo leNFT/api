@@ -1,19 +1,24 @@
 import express from "express";
-import cors from "cors";
+import Cors from "cors";
 import pkg from "body-parser";
 const { json } = pkg;
 import { config } from "dotenv";
 config();
 const app = express();
 
-var corsOptions = {
-  origin: [
-    "https://lenft.fi/",
-    "https://lenft.finance/",
-    "http://localhost:3000",
-  ],
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
+// Initialize the cors middleware
+const cors = initMiddleware(
+  // You can read more about the available options here: https://github.com/expressjs/cors#configuration-options
+  Cors({
+    // Only allow requests with GET and from the frontend
+    methods: ["GET"],
+    origin: [
+      "https://lenft.finance",
+      "http://localhost:3000",
+      "https://lenft.fi",
+    ],
+  })
+);
 
 // Middleware
 app.use(cors(corsOptions)); // Enable Cross-Origin Resource Sharing (CORS)
