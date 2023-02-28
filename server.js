@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import pkg from "body-parser";
 const { json } = pkg;
 import { config } from "dotenv";
@@ -7,7 +6,6 @@ config();
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing (CORS)
 app.use(json()); // Parse JSON request bodies
 
 import defaultRoute from "./routes/index.js";
@@ -16,6 +14,15 @@ import lendingRoute from "./routes/lending.js";
 import gaugesRoute from "./routes/gauges.js";
 import nftsRoute from "./routes/nfts.js";
 import lockRoute from "./routes/lock.js";
+
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
 
 app.use("/", defaultRoute);
 app.use("/trading", tradingRoute);
