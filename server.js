@@ -6,18 +6,8 @@ import { config } from "dotenv";
 config();
 const app = express();
 
-var corsOptions = {
-  origin: [
-    "https://lenft.fi",
-    "https://lenft.finance",
-    "http://localhost:3000",
-  ],
-  methods: "GET",
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
 // Middleware
-app.use(cors(corsOptions)); // Enable Cross-Origin Resource Sharing (CORS)
+app.use(cors()); // Enable Cross-Origin Resource Sharing (CORS)
 app.use(json()); // Parse JSON request bodies
 
 import defaultRoute from "./routes/index.js";
