@@ -34,7 +34,7 @@ export async function getImageURL(req, res) {
 
   if (nftMetadata.media) {
     res.status(200).json(nftMetadata.media[0].gateway);
-  } else if (nftMetadata.tokenUri.gateway) {
+  } else if (nftMetadata.tokenUri) {
     res.status(200).json(nftMetadata.tokenUri.gateway);
   } else {
     res.status(200).json("");
