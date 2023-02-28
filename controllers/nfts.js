@@ -32,7 +32,7 @@ export async function getImageURL(req, res) {
 
   const nftMetadata = await alchemy.nft.getNftMetadata(address, tokenId);
 
-  if (nftMetadata.media) {
+  if (nftMetadata.media && nftMetadata.media[0]) {
     res.status(200).json(nftMetadata.media[0].gateway);
   } else if (nftMetadata.tokenUri) {
     res.status(200).json(nftMetadata.tokenUri.gateway);
