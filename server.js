@@ -8,8 +8,8 @@ const app = express();
 
 var corsOptions = {
   origin: [
-    "https://lenft.fi/",
-    "https://lenft.finance/",
+    "https://lenft.fi",
+    "https://lenft.finance",
     "http://localhost:3000",
   ],
   methods: "GET",
