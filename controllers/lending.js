@@ -155,11 +155,11 @@ async function updatePoolDetails(poolAddress) {
     data: getBorrowRateFunctionSig,
   });
 
-  lendingPools[poolAddress] = {
-    borrowRate: BigNumber.from(borrowRateResponse).toNumber(),
-    supplyRate: BigNumber.from(supplyRateResponse).toNumber(),
-    tvl: BigNumber.from(tvlResponse).toString(),
-  };
+  lendingPools[poolAddress].borrowRate =
+    BigNumber.from(borrowRateResponse).toNumber();
+  lendingPools[poolAddress].supplyRate =
+    BigNumber.from(supplyRateResponse).toNumber();
+  lendingPools[poolAddress].tvl = BigNumber.from(tvlResponse).toString();
 }
 
 // Set the lending pool for a collection
@@ -173,6 +173,9 @@ async function setLendingPool(nftAddress, poolAddress) {
   collections[nftAddress] = {
     pool: poolAddress,
   };
+
+  console.log("Set lending pool: ", poolAddress, " for ", nftAddress);
+  console.log("lendingPools: ", lendingPools[poolAddress]);
 
   lendingPools[poolAddress].assets.push({
     address: nftAddress,
