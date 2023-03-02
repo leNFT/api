@@ -6,6 +6,7 @@ import { Network } from "alchemy-sdk";
 import { Alchemy } from "alchemy-sdk";
 import { getMessage } from "eip-712";
 import { config } from "dotenv";
+import abi from "web3-eth-abi";
 config();
 
 // Controller function for the GET route
@@ -83,7 +84,6 @@ export async function getFloorPrice(req, res) {
 export async function getPrice(req, res) {
   const { requestId, collection, tokenIds, chainId } = req.query;
   const tokensIdsArray = tokenIds.split(",");
-  const abi = utils.defaultAbiCoder;
   const expiryTimestamp = Math.round(Date.now() / 1000) + 3600;
   var priceSum = 0;
 
