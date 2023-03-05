@@ -59,9 +59,15 @@ console.log("Set up new gauge filter");
 
 // Add a new lending pool to the list
 async function addGauge(gaugeAddress, poolAddress) {
+  // Get the name of the pool this token is the
+  const poolName = await alchemy.core.call({
+    to: poolAddress,
+    data: utils.id("name()").substring(0, 10),
+  });
+
   console.log("Adding gauge: ", gaugeAddress);
   gauges[gaugeAddress] = {
-    pool: poolAddress,
+    pool: { address: poolAddress, name: poolName },
     history: [],
   };
 }
