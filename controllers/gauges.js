@@ -65,7 +65,10 @@ async function addGauge(gaugeAddress, poolAddress) {
     data: utils.id("name()").substring(0, 10),
   });
 
-  const poolName = utils.toUtf8String(poolNameResponse);
+  const poolName = utils.defaultAbiCoder.decode(
+    ["string"],
+    poolNameResponse
+  )[0];
 
   console.log("Adding gauge: ", gaugeAddress);
   gauges[gaugeAddress] = {
