@@ -42,16 +42,8 @@ export async function getImageURL(req, res) {
   }
 }
 
-export async function getFloorPrice(req, res) {
-  const { address, chainId } = req.query;
+async function upshotFloorPrice(address, chainId) {
   var floorPrice = "0";
-
-  console.log("Got a price request for chainID:", chainId);
-  if (!(address && chainId)) {
-    //Check inputs
-    res.status(400).json({ error: "Lacks input data" });
-  }
-
   // Test collections case for goerli
   if (chainId == "5") {
     floorPrice = "8000000000000000"; //Price of 0.008 ETH
@@ -74,10 +66,25 @@ export async function getFloorPrice(req, res) {
 
     //Build return data
     console.log(collection);
-    if (collection.data) {
+    if (collection.data.isAppraised) {
       floorPrice = collection.data.floor.wei;
     }
   }
+
+  return floorPrice;
+}
+
+export async function getFloorPrice(req, res) {
+  const { address, chainId } = req.query;
+
+  console.log("Got a price request for chainID:", chainId);
+  if (!(address && chainId)) {
+    //Check inputs
+    res.status(400).json({ error: "Lacks input data" });
+  }
+
+  const floorPrice = await upshotFloorPrice(address, chainId);
+
   res.status(200).json(floorPrice);
 }
 
@@ -98,34 +105,8 @@ export async function getPrice(req, res) {
       ? contractAddresses[chainId]
       : contractAddresses["1"];
 
-  // Test collections case for goerli
-  if (chainId == "5") {
-    priceSum = BigNumber.from("8000000000000000")
-      .mul(tokensIdsArray.length)
-      .toString(); //Price of 0.008 ETH per Token
-
-    // Mainnet Case
-  } else {
-    const options = {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "x-api-key": process.env.UPSHOT_API_KEY,
-      },
-    };
-
-    const url = "https://api.upshot.xyz/v2/collections/" + collection;
-
-    const collectionResponse = await fetch(url, options).catch((err) =>
-      console.error(err)
-    );
-    const collection = await collectionResponse.json();
-    if (collection.data.floor !== undefined) {
-      priceSum = BigNumber.from(collection.data.floor.wei)
-        .mul(tokensIdsArray.length)
-        .toString();
-    }
-  }
+  const floorPrice = await upshotFloorPrice(collection, chainId);
+  priceSum = BigNumber.from(floorPrice).mul(tokensIdsArray.length).toString();
 
   if (requestId && priceSum != 0) {
     const payload = abi.encodeParameter(
